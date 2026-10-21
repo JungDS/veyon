@@ -20,29 +20,29 @@ jobs:
           submodules: recursive
           persist-credentials: false
 
-      - name: Set up MSYS2 MinGW64 and Qt 6 dependencies
+      - name: Set up MSYS2 UCRT64 and Qt 6 dependencies
         uses: msys2/setup-msys2@v2
         with:
-          msystem: MINGW64
+          msystem: UCRT64
           update: true
           install: >-
             git
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-ninja
-            mingw-w64-x86_64-pkgconf
-            mingw-w64-x86_64-qt6-base
-            mingw-w64-x86_64-qt6-5compat
-            mingw-w64-x86_64-qt6-tools
-            mingw-w64-x86_64-qca-qt6
-            mingw-w64-x86_64-openssl
-            mingw-w64-x86_64-libvncserver
-            mingw-w64-x86_64-lzo2
-            mingw-w64-x86_64-libjpeg-turbo
-            mingw-w64-x86_64-libpng
-            mingw-w64-x86_64-zlib
-            mingw-w64-x86_64-openldap
-            mingw-w64-x86_64-cyrus-sasl
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-qt6-base
+            mingw-w64-ucrt-x86_64-qt6-5compat
+            mingw-w64-ucrt-x86_64-qt6-tools
+            mingw-w64-ucrt-x86_64-qca-qt6
+            mingw-w64-ucrt-x86_64-openssl
+            mingw-w64-ucrt-x86_64-libvncserver
+            mingw-w64-ucrt-x86_64-lzo2
+            mingw-w64-ucrt-x86_64-libjpeg-turbo
+            mingw-w64-ucrt-x86_64-libpng
+            mingw-w64-ucrt-x86_64-zlib
+            mingw-w64-ucrt-x86_64-openldap
+            mingw-w64-ucrt-x86_64-cyrus-sasl
 
       - name: Configure Windows x64 build
         shell: msys2 {0}
