@@ -25,6 +25,10 @@
 #include <QMessageBox>
 #include <QScreen>
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 #include "AuthenticationCredentials.h"
 #include "Computer.h"
 #include "ComputerControlInterface.h"
@@ -563,22 +567,52 @@ QRect DemoFeaturePlugin::viewportFromScreenSelection() const
 		return {};
 	}
 
-	QPoint minimumScreenPosition{};
-	for( const auto* screen : m_screens )
-	{
-		minimumScreenPosition.setX( qMin( minimumScreenPosition.x(), screen->geometry().x() ) );
-		minimumScreenPosition.setY( qMin( minimumScreenPosition.y(), screen->geometry().y() ) );
-	}
-
 	const auto screen = m_screens.value( m_screenSelection - 1 );
-	if( screen )
+	if( screen == nullptr )
 	{
-		return screen->geometry().translated( -minimumScreenPosition );
+		return {};
 	}
 
-	return {};
-}
+#ifdef Q_OS_WIN
+	// UltraVNC captures the Windows virtual desktop in physical pixels.
+	// QScreen::geometry() uses device-independent pixels for its size on Windows,
+	// so passing it directly as a VNC viewport crops the right and bottom edges
+	// on monitors using fractional display scaling (e.g. 125%).
+	//
+	// Obtain the selected monitor's physical coordinates from the same Win32
+	// display settings API used by UltraVNC's monitor enumeration.
+	DEVMODEW displayMode{};
+	displayMode.dmSize = sizeof(displayMode);
+	const auto displayName = screen->name().toStdWString();
+	if( EnumDisplaySettingsW( displayName.c_str(), ENUM_CURRENT_SETTINGS, &displayMode ) )
+	{
+		const QRect viewport{
+			displayMode.dmPosition.x - GetSystemMetrics( SM_XVIRTUALSCREEN ),
+			displayMode.dmPosition.y - GetSystemMetrics( SM_YVIRTUALSCREEN ),
+			static_cast<int>( displayMode.dmPelsWidth ),
+			static_cast<int>( displayMode.dmPelsHeight )
+		};
+		vDebug() << "Demo physical screen viewport:" << viewport << displayName.c_str();
+		return viewport;
+	}
 
+	vWarning() << "Could not determine physical geometry for demo screen" << screen->name();
+#endif
+
+	// Fallback to Qt geometry when native Windows monitor lookup fails.
+	QPoint minimumScreenPosition{};
+	for( const auto* candidate : m_screens )
+	{
+		minimumScreenPosition.setX( qMin( minimumScreenPosition.x(), candidate->geometry().x() ) );
+		minimumScreenPosition.setY( qMin( minimumScreenPosition.y(), candidate->geometry().y() ) );
+	}
+
+	QRect viewport = screen->geometry().translated( -minimumScreenPosition );
+#ifdef Q_OS_WIN
+	viewport.setSize( ( QSizeF( viewport.size() ) * screen->devicePixelRatio() ).toSize() );
+#endif
+	return viewport;
+}
 
 
 void DemoFeaturePlugin::controlDemoServer()
