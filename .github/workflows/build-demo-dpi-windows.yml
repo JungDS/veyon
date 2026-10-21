@@ -53,7 +53,8 @@ jobs:
             -DWITH_TRANSLATIONS=OFF \
             -DWITH_WEBAPI=OFF \
             -DWITH_PCH=OFF \
-            -DWITH_UNITY_BUILD=OFF
+            -DWITH_UNITY_BUILD=OFF \
+            -DCMAKE_CXX_FLAGS=-Wno-sfinae-incomplete
 
       - name: Compile demo.dll and dependencies
         shell: msys2 {0}
