@@ -1,0 +1,71 @@
+name: Build Windows demo.dll (DPI fix)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix/demo-dpi-125
+
+permissions:
+  contents: read
+
+jobs:
+  demo-win64:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout Veyon 4.11.4 fork and submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Set up MSYS2 MinGW64 and Qt 6 dependencies
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-qt6-base
+            mingw-w64-x86_64-qt6-5compat
+            mingw-w64-x86_64-qt6-tools
+            mingw-w64-x86_64-qca-qt6
+            mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-libvncserver
+            mingw-w64-x86_64-lzo2
+            mingw-w64-x86_64-libjpeg-turbo
+            mingw-w64-x86_64-libpng
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-openldap
+            mingw-w64-x86_64-cyrus-sasl
+
+      - name: Configure Windows x64 build
+        shell: msys2 {0}
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DWITH_QT6=ON \
+            -DWITH_TRANSLATIONS=OFF \
+            -DWITH_WEBAPI=OFF \
+            -DWITH_PCH=OFF \
+            -DWITH_UNITY_BUILD=OFF
+
+      - name: Compile demo.dll and dependencies
+        shell: msys2 {0}
+        run: |
+          cmake --build build --target demo --parallel 4
+          test -f build/plugins/demo/demo.dll
+          sha256sum build/plugins/demo/demo.dll
+          file build/plugins/demo/demo.dll || true
+
+      - name: Upload trial DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: veyon-4.11.4-demo-dpi-win64-UNTESTED
+          path: build/plugins/demo/demo.dll
+          if-no-files-found: error
