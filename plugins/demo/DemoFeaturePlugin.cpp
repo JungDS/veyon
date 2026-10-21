@@ -592,7 +592,7 @@ QRect DemoFeaturePlugin::viewportFromScreenSelection() const
 			static_cast<int>( displayMode.dmPelsWidth ),
 			static_cast<int>( displayMode.dmPelsHeight )
 		};
-		vDebug() << "Demo physical screen viewport:" << viewport << displayName.c_str();
+		vDebug() << "Demo physical screen viewport:" << viewport << screen->name();
 		return viewport;
 	}
 
